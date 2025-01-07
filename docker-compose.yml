@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: "traefik:v2.10"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./traefik/traefik.yml:/traefik.yml"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`localhost`) && PathPrefix(`/traefik`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.middlewares.traefik-stripprefix.stripprefix.prefixes=/traefik"
+      - "traefik.http.routers.traefik.middlewares=traefik-stripprefix"
+
+  metricode-ui:
+    image: metricode-metricode-ui
+    build:
+      context: ./metricode-ui
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ui.rule=Host(`localhost`)"
+      - "traefik.http.services.ui.loadbalancer.server.port=5173"
+    environment:
+      - VITE_BASE_URL=http://localhost
+
+  metricode-filemanager:
+    image: metricode-metricode-filemanager
+    build:
+      context: ./metricode-filemanager
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.filemanager.rule=Host(`localhost`) && PathPrefix(`/api/filemanager`)"
+      - "traefik.http.services.filemanager.loadbalancer.server.port=5001"
+    volumes:
+      - ./metricode-filemanager/dist/uploads:/app/dist/uploads
+
+networks:
+  default:
+    driver: bridge
