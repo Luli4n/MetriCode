@@ -6,35 +6,41 @@ import './App.css';
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 
 interface Project {
-    fileName: string;
+    id: string;
+    projectName: string;
     runtime: string;
 }
 
 const App: React.FC = () => {
     const [uploadedProjects, setUploadedProjects] = useState<Project[]>([]);
 
-    useEffect(() => {
-        const fetchProjects = async () => {
-            try {
-                const response = await fetch(`${apiBaseUrl}/api/filemanager/projects`);
-                if (response.ok) {
-                    const projects: Project[] = await response.json();
-                    setUploadedProjects(projects);
-                }
-            } catch (error) {
-                console.error('Błąd podczas ładowania projektów:', error);
+    // Funkcja pobierająca projekty z backendu
+    const fetchProjects = async () => {
+        try {
+            const response = await fetch(`${apiBaseUrl}/api/filemanager/projects`);
+            if (response.ok) {
+                const projects: Project[] = await response.json();
+                setUploadedProjects(projects);
+            } else {
+                console.error('Błąd podczas ładowania projektów:', response.statusText);
             }
-        };
+        } catch (error) {
+            console.error('Błąd podczas ładowania projektów:', error);
+        }
+    };
+
+    useEffect(() => {
         fetchProjects();
     }, []);
 
-    const handleFileUpload = (fileName: string, runtime: string) => {
-        setUploadedProjects((prevProjects) => [...prevProjects, { fileName, runtime }]);
+    const handleFileUpload = async (id: string, projectName: string, runtime: string) => {
+        // Po przesłaniu pliku odśwież listę projektów
+        await fetchProjects();
     };
 
-    const handleProjectDelete = (projectName: string) => {
+    const handleProjectDelete = async (id: string) => {
         setUploadedProjects((prevProjects) =>
-            prevProjects.filter((project) => project.fileName !== projectName)
+            prevProjects.filter((project) => project.id !== id)
         );
     };
 
@@ -42,10 +48,11 @@ const App: React.FC = () => {
         <div className="app-container">
             <h1>MetriCode</h1>
             <FileUpload onFileUploaded={handleFileUpload} />
-            {uploadedProjects.map((project, index) => (
+            {uploadedProjects.map((project) => (
                 <ContainerManager
-                    key={index}
-                    uploadedFileName={project.fileName}
+                    key={project.id}
+                    id={project.id}
+                    projectName={project.projectName}
                     runtime={project.runtime}
                     onProjectDeleted={handleProjectDelete}
                 />

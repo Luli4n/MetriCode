@@ -4,23 +4,13 @@ import './ContainerManager.css';
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 
 interface ContainerManagerProps {
-    uploadedFileName: string;
-    runtime: string; // Dodano runtime jako prop
-    onProjectDeleted: (projectName: string) => void;
+    id: string;
+    projectName: string;
+    runtime: string;
+    onProjectDeleted: (id: string) => void;
 }
 
-const formatProjectName = (uploadedFileName: string) => {
-    if (!uploadedFileName) return 'Brak nazwy projektu';
-    const parts = uploadedFileName.split('-');
-    if (parts.length > 1) {
-        const timestampPart = parts[parts.length - 1].split('.')[0];
-        const timestamp = new Date(parseInt(timestampPart, 10));
-        return `${parts.slice(0, parts.length - 1).join('-')} (Dodano: ${timestamp.toLocaleString()})`;
-    }
-    return uploadedFileName;
-};
-
-const ContainerManager: React.FC<ContainerManagerProps> = ({ uploadedFileName, runtime, onProjectDeleted }) => {
+const ContainerManager: React.FC<ContainerManagerProps> = ({ id, projectName, runtime, onProjectDeleted }) => {
     const [isRunning, setIsRunning] = useState(false);
     const [testResults, setTestResults] = useState<{ cpu: number; ram: number; duration: number } | null>(null);
 
@@ -30,7 +20,7 @@ const ContainerManager: React.FC<ContainerManagerProps> = ({ uploadedFileName, r
             const response = await fetch(`${apiBaseUrl}/api/containermanager/run-container`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ projectName: uploadedFileName, runtime })
+                body: JSON.stringify({ id, runtime })
             });
 
             if (!response.ok) {
@@ -38,7 +28,7 @@ const ContainerManager: React.FC<ContainerManagerProps> = ({ uploadedFileName, r
             }
 
             const results = await response.json();
-            setTestResults(results.results); // Zakładamy, że results zawiera wyniki w `results`
+            setTestResults(results.results);
             alert('Test zakończony pomyślnie!');
         } catch (error) {
             alert('Błąd podczas uruchamiania testu.');
@@ -49,17 +39,17 @@ const ContainerManager: React.FC<ContainerManagerProps> = ({ uploadedFileName, r
     };
 
     const handleDeleteProject = async () => {
-        const confirmDelete = window.confirm(`Czy na pewno chcesz usunąć projekt "${uploadedFileName}"?`);
+        const confirmDelete = window.confirm(`Czy na pewno chcesz usunąć projekt "${projectName}"?`);
         if (!confirmDelete) return;
 
         try {
-            const response = await fetch(`${apiBaseUrl}/api/filemanager/delete/${uploadedFileName}`, {
+            const response = await fetch(`${apiBaseUrl}/api/filemanager/delete/${id}`, {
                 method: 'DELETE',
             });
 
             if (response.ok) {
-                onProjectDeleted(uploadedFileName);
-                alert(`Projekt "${uploadedFileName}" został usunięty.`);
+                onProjectDeleted(id);
+                alert(`Projekt "${projectName}" został usunięty.`);
             } else {
                 alert('Błąd podczas usuwania projektu.');
             }
@@ -71,7 +61,7 @@ const ContainerManager: React.FC<ContainerManagerProps> = ({ uploadedFileName, r
 
     return (
         <div className="container-manager-container">
-            <h2 className="project-name">{formatProjectName(uploadedFileName)}</h2>
+            <h2 className="project-name">{projectName}</h2>
             <p><strong>Runtime:</strong> {runtime}</p>
             <div className="button-group">
                 <button onClick={handleRunTest} disabled={isRunning} className="primary-button">

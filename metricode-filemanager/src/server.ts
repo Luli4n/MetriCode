@@ -3,12 +3,29 @@ import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
 import cors from 'cors';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const app = express();
 const PORT = 5001;
+const DB_URL = process.env.MONGO_URL || 'mongodb://mongodb:27017';
+const DB_NAME = 'metricode';
+const COLLECTION_NAME = 'projects';
 
 app.use(cors());
 app.use(express.json());
+
+const client = new MongoClient(DB_URL);
+let db: any;
+
+client.connect()
+    .then(() => {
+        db = client.db(DB_NAME);
+        console.log('Połączono z bazą MongoDB');
+    })
+    .catch(err => {
+        console.error('Błąd połączenia z MongoDB:', err);
+        process.exit(1);
+    });
 
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -17,49 +34,83 @@ if (!fs.existsSync(uploadDir)) {
 
 const storage = multer.diskStorage({
     destination: uploadDir,
-    filename: (req, file, cb) => {
-        const timestamp = Date.now();
-        const projectName = req.query.projectName || 'unnamed_project';
-        const fileName = `${projectName}-${timestamp}.zip`;
-        cb(null, fileName);
+    filename: async (req, file, cb) => {
+        try {
+            // Generujemy nowe ID projektu
+            const id = new ObjectId();
+            const fileName = `${id.toString()}.zip`;
+
+            // Dane projektu do zapisania w bazie danych
+            const { projectName, runtime } = req.query;
+            const projectData = {
+                _id: id,
+                projectName: projectName ? String(projectName) : 'Unnamed Project',
+                runtime: runtime ? String(runtime) : 'python3.12',
+                filePath: path.join(uploadDir, fileName),
+                timestamp: Date.now(),
+            };
+
+            // Zapis projektu do bazy danych
+            await db.collection(COLLECTION_NAME).insertOne(projectData);
+
+            console.log(`[DEBUG] Projekt zapisany w bazie danych: ${JSON.stringify(projectData)}`);
+            cb(null, fileName);
+        } catch (err) {
+            console.error(`[DEBUG] Błąd podczas generowania nazwy pliku: ${err}`);
+            cb(err as Error, ''); // Rzutujemy błąd na typ `Error`
+        }
     }
 });
 const upload = multer({ storage });
 
+// Upload pliku
 app.post('/api/filemanager/upload', upload.single('file'), (req, res) => {
     if (!req.file) {
         return res.status(400).send('Nie przesłano pliku.');
     }
-    res.status(200).json({ fileName: req.file.filename });
+    res.status(200).json({ message: 'Plik został przesłany.' });
 });
 
-app.get('/api/filemanager/projects', (req, res) => {
-    fs.readdir(uploadDir, (err, files) => {
-        if (err) {
-            return res.status(500).send('Błąd podczas odczytu plików.');
-        }
-
-        // Mapujemy nazwy plików na obiekty z nazwą pliku i runtime
-        const projects = files.map((file) => ({
-            fileName: file,
-            runtime: 'python3.12' // Domyślny runtime
-        }));
-
-        res.status(200).json(projects);
-    });
-});
-
-app.delete('/api/filemanager/delete/:projectName', (req, res) => {
-    const projectName = req.params.projectName;
-    const filePath = path.join(uploadDir, projectName);
-    if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        return res.status(200).send('Plik został usunięty.');
-    } else {
-        return res.status(404).send('Plik nie istnieje.');
+// Pobieranie listy projektów
+app.get('/api/filemanager/projects', async (req, res) => {
+    try {
+        const projects = await db.collection(COLLECTION_NAME).find({}).toArray();
+        res.status(200).json(
+            projects.map(({ _id, projectName, runtime }: { _id: ObjectId; projectName: string; runtime: string }) => ({
+                id: _id.toString(),
+                projectName,
+                runtime,
+            }))
+        );
+    } catch (err) {
+        console.error('Błąd pobierania projektów z bazy:', err);
+        res.status(500).send('Błąd podczas pobierania projektów.');
     }
 });
 
+// Usuwanie projektu
+app.delete('/api/filemanager/delete/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        const project = await db.collection(COLLECTION_NAME).findOne({ _id: new ObjectId(id) });
+        if (!project) {
+            return res.status(404).send('Projekt nie istnieje.');
+        }
+
+        if (fs.existsSync(project.filePath)) {
+            fs.unlinkSync(project.filePath);
+        }
+
+        await db.collection(COLLECTION_NAME).deleteOne({ _id: new ObjectId(id) });
+        res.status(200).send('Projekt został usunięty.');
+    } catch (err) {
+        console.error('Błąd usuwania projektu:', err);
+        res.status(500).send('Błąd podczas usuwania projektu.');
+    }
+});
+
+// Start serwera
 app.listen(PORT, () => {
     console.log(`MetriCode File Manager działa na http://localhost:${PORT}`);
 });

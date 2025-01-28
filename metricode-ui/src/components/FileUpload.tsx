@@ -4,7 +4,7 @@ import './FileUpload.css';
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 
 interface FileUploadProps {
-    onFileUploaded: (fileName: string, runtime: string) => void;
+    onFileUploaded: (id: string, projectName: string, runtime: string) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({ onFileUploaded }) => {
@@ -38,7 +38,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUploaded }) => {
 
             if (response.ok) {
                 const data = await response.json();
-                onFileUploaded(data.fileName, runtime);
+                onFileUploaded(data.id, projectName, runtime);
                 alert('Plik został pomyślnie przesłany!');
             } else {
                 alert('Błąd podczas przesyłania pliku.');
