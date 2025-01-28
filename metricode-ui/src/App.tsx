@@ -5,15 +5,20 @@ import './App.css';
 
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 
+interface Project {
+    fileName: string;
+    runtime: string;
+}
+
 const App: React.FC = () => {
-    const [uploadedProjects, setUploadedProjects] = useState<string[]>([]);
+    const [uploadedProjects, setUploadedProjects] = useState<Project[]>([]);
 
     useEffect(() => {
         const fetchProjects = async () => {
             try {
                 const response = await fetch(`${apiBaseUrl}/api/filemanager/projects`);
                 if (response.ok) {
-                    const projects = await response.json();
+                    const projects: Project[] = await response.json();
                     setUploadedProjects(projects);
                 }
             } catch (error) {
@@ -23,13 +28,13 @@ const App: React.FC = () => {
         fetchProjects();
     }, []);
 
-    const handleFileUpload = (fileName: string) => {
-        setUploadedProjects((prevProjects) => [...prevProjects, fileName]);
+    const handleFileUpload = (fileName: string, runtime: string) => {
+        setUploadedProjects((prevProjects) => [...prevProjects, { fileName, runtime }]);
     };
 
     const handleProjectDelete = (projectName: string) => {
         setUploadedProjects((prevProjects) =>
-            prevProjects.filter((name) => name !== projectName)
+            prevProjects.filter((project) => project.fileName !== projectName)
         );
     };
 
@@ -40,7 +45,8 @@ const App: React.FC = () => {
             {uploadedProjects.map((project, index) => (
                 <ContainerManager
                     key={index}
-                    uploadedFileName={project}
+                    uploadedFileName={project.fileName}
+                    runtime={project.runtime}
                     onProjectDeleted={handleProjectDelete}
                 />
             ))}

@@ -10,7 +10,6 @@ const PORT = 5001;
 app.use(cors());
 app.use(express.json());
 
-
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -39,7 +38,14 @@ app.get('/api/filemanager/projects', (req, res) => {
         if (err) {
             return res.status(500).send('Błąd podczas odczytu plików.');
         }
-        res.status(200).json(files);
+
+        // Mapujemy nazwy plików na obiekty z nazwą pliku i runtime
+        const projects = files.map((file) => ({
+            fileName: file,
+            runtime: 'python3.12' // Domyślny runtime
+        }));
+
+        res.status(200).json(projects);
     });
 });
 

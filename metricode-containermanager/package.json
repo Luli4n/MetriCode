@@ -1,0 +1,32 @@
+{
+    "name": "metricode-containermanager",
+    "version": "1.0.0",
+    "description": "MetriCode Container Manager - uruchamianie kontenerów dla projektów w różnych runtime'ach.",
+    "main": "dist/server.js",
+    "scripts": {
+        "start": "node dist/server.js",
+        "build": "tsc",
+        "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    },
+    "dependencies": {
+        "body-parser": "^1.20.2",
+        "cors": "^2.8.5",
+        "express": "^4.18.2",
+        "mongodb": "^5.4.0",
+        "unzipper": "^0.10.11"
+    },
+    "devDependencies": {
+        "@types/body-parser": "^1.19.2",
+        "@types/cors": "^2.8.14",
+        "@types/express": "^4.17.17",
+        "@types/node": "^20.6.3",
+        "@types/unzipper": "^0.10.10",
+        "ts-node": "^10.9.1",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.1.3"
+    },
+    "engines": {
+        "node": ">=18"
+    },
+    "license": "MIT"
+}

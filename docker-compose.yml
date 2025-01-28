@@ -7,37 +7,66 @@ services:
       - "80:80"
       - "8080:8080"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/traefik.yml:/traefik.yml"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`localhost`) && PathPrefix(`/traefik`)"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.middlewares.traefik-stripprefix.stripprefix.prefixes=/traefik"
       - "traefik.http.routers.traefik.middlewares=traefik-stripprefix"
 
   metricode-ui:
-    image: metricode-metricode-ui
+    image: metricode-ui
     build:
       context: ./metricode-ui
+    environment:
+      - VITE_BASE_URL=http://localhost
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ui.rule=Host(`localhost`)"
       - "traefik.http.services.ui.loadbalancer.server.port=5173"
-    environment:
-      - VITE_BASE_URL=http://localhost
 
   metricode-filemanager:
-    image: metricode-metricode-filemanager
+    ports:
+      - "5001:5001"
+    image: metricode-filemanager
     build:
       context: ./metricode-filemanager
+    volumes:
+      - "uploads_volume:/app/dist/uploads"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.filemanager.rule=Host(`localhost`) && PathPrefix(`/api/filemanager`)"
       - "traefik.http.services.filemanager.loadbalancer.server.port=5001"
-    volumes:
-      - ./metricode-filemanager/dist/uploads:/app/dist/uploads
 
-networks:
-  default:
-    driver: bridge
+  metricode-containermanager:
+    ports:
+      - "5002:5002"
+    image: metricode-containermanager
+    build:
+      context: ./metricode-containermanager
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "uploads_volume:/app/dist/uploads"
+    environment:
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - MONGO_URL=mongodb://mongodb:27017
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.containermanager.rule=Host(`localhost`) && PathPrefix(`/api/containermanager`)"
+      - "traefik.http.services.containermanager.loadbalancer.server.port=5002"
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  uploads_volume:
+  mongo_data:

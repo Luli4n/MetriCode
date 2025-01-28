@@ -7,6 +7,4 @@ COPY . .
 RUN npm install
 RUN npm run build
 
-RUN mkdir /app/uploads
-
 CMD ["npm", "start"]
