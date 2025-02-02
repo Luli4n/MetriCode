@@ -5,11 +5,11 @@ from metricode import MetricsUploader
 uploader = MetricsUploader()
 
 # Dodanie przykładowego pola przed rozpoczęciem testu
-uploader.add_field("test_status", "started", unit="")
+uploader.add_field("test_status", "in_progress", unit="")
 
-# Symulacja długiego zadania
+# Symulacja dłuższego zadania
 start = time.time()
-time.sleep(1)  # Symulacja zadania trwającego 1 sekundę
+time.sleep(2)  # Dłuższy czas wykonania (2 sekundy)
 end = time.time()
 
 # Obliczanie czasu wykonania
@@ -21,8 +21,8 @@ print(f"Czas wykonania: {execution_time:.2f} sekundy")
 uploader.add_field("execution_time", execution_time, unit="seconds")
 
 # Symulacja danych szeregów czasowych (np. zmieniającego się obciążenia CPU)
-timestamps = [int(start * 1000), int((start + 0.5) * 1000), int(end * 1000)]
-cpu_usages = [25.0, 35.0, 20.0]  # Przykładowe dane
+timestamps = [int(start * 1000), int((start + 0.7) * 1000), int((start + 1.4) * 1000), int(end * 1000)]
+cpu_usages = [40.0, 50.0, 30.0, 45.0]  # Inne wartości CPU niż w pierwszym benchmarku
 uploader.add_timeseries_field("cpu_usage", cpu_usages, timestamps, unit="%")
 
 # Zapisanie wyników do bazy

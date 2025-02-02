@@ -4,6 +4,7 @@ import 'chart.js/auto';
 import 'chartjs-adapter-date-fns';
 import TreeView from 'react-treeview';
 import 'react-treeview/react-treeview.css';
+import { format } from 'date-fns';
 import './Dashboard.css';
 
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
@@ -73,11 +74,11 @@ const Dashboard: React.FC = () => {
         });
     };
 
-    const normalizeTimestamps = (timestamps?: number[]) => {
-        if (!timestamps || timestamps.length === 0) return [];
-        if (!standardizeTime) return timestamps;
-        const startTime = timestamps[0];
-        return timestamps.map(ts => ts - startTime);
+    const normalizeTimestamps = (timestamps: number[], startTime?: number) => {
+        if (standardizeTime && startTime) {
+            return timestamps.map(ts => ts - startTime); // Standaryzacja -> ms od początku
+        }
+        return timestamps.map(ts => new Date(ts)); // Pełne daty bez standaryzacji
     };
 
     return (
@@ -165,30 +166,39 @@ const Dashboard: React.FC = () => {
                         <h3>Szeregi czasowe</h3>
                         <Line
                             data={{
-                                labels: results.length > 0
-                                    ? normalizeTimestamps(
-                                        results[0].timeseriesFields[Array.from(selectedMetrics)[0]?.split(' - ')[1]]?.timestamps
-                                    )
-                                    : [],
+                                labels: Array.from(selectedMetrics).map(metric => {
+                                    const [projectName, tsFieldName] = metric.split(' - ');
+                                    const dataset = results.find(r => getProjectName(r.projectId) === projectName);
+                                    if (!dataset) return [];
+                                    const timestamps = dataset.timeseriesFields[tsFieldName]?.timestamps || [];
+                                    return normalizeTimestamps(
+                                        timestamps,
+                                        standardizeTime ? timestamps[0] : undefined
+                                    );
+                                }).flat(),
                                 datasets: Array.from(selectedMetrics)
                                     .filter(metric => results.some(r => r.timeseriesFields[metric.split(' - ')[1]]))
                                     .map((metric, index) => {
                                         const [projectName, tsFieldName] = metric.split(' - ');
                                         const dataset = results.find(r => getProjectName(r.projectId) === projectName);
+                                        const tsData = dataset?.timeseriesFields[tsFieldName];
+                                        if (!tsData) return null;
+
                                         return {
-                                            label: metric,
-                                            data: dataset ? dataset.timeseriesFields[tsFieldName].values : [],
+                                            label: `${projectName} - ${tsFieldName}`,
+                                            data: tsData.values,
                                             borderColor: ['red', 'blue', 'green', 'purple'][index % 4],
                                             fill: false,
+                                            tension: 0,
                                         };
-                                    }),
+                                    }).filter(Boolean),
                             }}
                             options={{
                                 responsive: true,
                                 scales: {
                                     x: {
-                                        type: 'linear',
-                                        title: { display: true, text: 'Czas (ms)' }
+                                        type: standardizeTime ? 'linear' : 'time',
+                                        title: { display: true, text: standardizeTime ? 'Czas (ms)' : 'Czas' }
                                     }
                                 }
                             }}
