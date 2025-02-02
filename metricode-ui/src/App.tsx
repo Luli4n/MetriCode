@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import FileUpload from './components/FileUpload';
 import ContainerManager from './components/ContainerManager';
+import ReadMe from './components/ReadMe';
+import Dashboard from './components/Dashboard';
 import './App.css';
 
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
@@ -13,8 +15,8 @@ interface Project {
 
 const App: React.FC = () => {
     const [uploadedProjects, setUploadedProjects] = useState<Project[]>([]);
+    const [activeTab, setActiveTab] = useState<'projects' | 'readme' | 'dashboard'>('projects');
 
-    // Funkcja pobierająca projekty z backendu
     const fetchProjects = async () => {
         try {
             const response = await fetch(`${apiBaseUrl}/api/filemanager/projects`);
@@ -34,7 +36,6 @@ const App: React.FC = () => {
     }, []);
 
     const handleFileUpload = async (id: string, projectName: string, runtime: string) => {
-        // Po przesłaniu pliku odśwież listę projektów
         await fetchProjects();
     };
 
@@ -46,17 +47,49 @@ const App: React.FC = () => {
 
     return (
         <div className="app-container">
-            <h1>MetriCode</h1>
-            <FileUpload onFileUploaded={handleFileUpload} />
-            {uploadedProjects.map((project) => (
-                <ContainerManager
-                    key={project.id}
-                    id={project.id}
-                    projectName={project.projectName}
-                    runtime={project.runtime}
-                    onProjectDeleted={handleProjectDelete}
-                />
-            ))}
+            <header className="app-header">
+                <h1 className="app-title">MetriCode</h1>
+                <nav className="app-nav">
+                    <button
+                        className={`nav-button ${activeTab === 'projects' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('projects')}
+                    >
+                        Projekty
+                    </button>
+                    <button
+                        className={`nav-button ${activeTab === 'readme' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('readme')}
+                    >
+                        Instrukcja
+                    </button>
+                    <button
+                        className={`nav-button ${activeTab === 'dashboard' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('dashboard')}
+                    >
+                        Dashboard
+                    </button>
+                </nav>
+            </header>
+            <main>
+                {activeTab === 'projects' ? (
+                    <>
+                        <FileUpload onFileUploaded={handleFileUpload} />
+                        {uploadedProjects.map((project) => (
+                            <ContainerManager
+                                key={project.id}
+                                id={project.id}
+                                projectName={project.projectName}
+                                runtime={project.runtime}
+                                onProjectDeleted={handleProjectDelete}
+                            />
+                        ))}
+                    </>
+                ) : activeTab === 'readme' ? (
+                    <ReadMe />
+                ) : (
+                    <Dashboard />
+                )}
+            </main>
         </div>
     );
 };

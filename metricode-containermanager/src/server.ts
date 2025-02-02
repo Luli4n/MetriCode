@@ -99,47 +99,35 @@ app.post('/api/containermanager/run-container', async (req, res) => {
             --name "${containerName}" \
             --network host \
             -v metricode_uploads_volume:/app/dist/uploads \
+            -e PROJECT_ID=${project._id} \
+            -e MONGO_URL=mongodb://localhost:27017 \
+            -e MONGO_DB_NAME=${DB_NAME} \
+            -e RUNTIME=${project.runtime} \
             ${imageName} \
-            /bin/sh -c "cd /app/dist/uploads/${project._id} && chmod +x run.sh && ./run.sh"
+            /bin/sh -c "cd /app/dist/uploads/${project._id} && /app/run.sh"
         `;
 
         console.log(`[DEBUG] Polecenie Docker: ${command}`);
 
         exec(command, async (error, stdout, stderr) => {
             isContainerRunning = false;
-
+        
             const cleanupProjectFiles = () => {
                 if (fs.existsSync(projectExtractPath)) {
                     fs.rmSync(projectExtractPath, { recursive: true, force: true });
                     console.log(`[DEBUG] Usunięto pliki projektu: ${projectExtractPath}`);
                 }
             };
-
+        
             if (error) {
                 console.error(`[DEBUG] Błąd uruchamiania kontenera: ${stderr}`);
                 cleanupProjectFiles();
                 return res.status(500).send(`Błąd uruchamiania kontenera: ${stderr}`);
             }
-
-            const benchmarkResult = {
-                projectId: project._id,
-                runtime: project.runtime,
-                cpuUsage: Math.random() * 100,
-                ramUsage: Math.random() * 500,
-                custom_fields: [],
-                custom_timeseries_fields: []
-            };
-
-            try {
-                await db.collection(BENCHMARK_COLLECTION).insertOne(benchmarkResult);
-                console.log(`[DEBUG] Wyniki zapisane dla projektu ${project._id}`);
-            } catch (dbError) {
-                console.error('[DEBUG] Błąd podczas zapisu wyników w bazie:', dbError);
-                return res.status(500).send('Błąd podczas zapisu wyników w bazie.');
-            }
-
+        
+            console.log(`[DEBUG] Test zakończony pomyślnie dla projektu ${project._id}`);
             cleanupProjectFiles();
-            res.status(200).json({ message: `Test zakończony dla projektu ${project._id}`, results: benchmarkResult });
+            res.status(200).json({ message: `Test zakończony dla projektu ${project._id}` });
         });
     } catch (error) {
         console.error('[DEBUG] Błąd podczas uruchamiania kontenera:', error);

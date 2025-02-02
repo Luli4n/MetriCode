@@ -12,7 +12,6 @@ interface ContainerManagerProps {
 
 const ContainerManager: React.FC<ContainerManagerProps> = ({ id, projectName, runtime, onProjectDeleted }) => {
     const [isRunning, setIsRunning] = useState(false);
-    const [testResults, setTestResults] = useState<{ cpu: number; ram: number; duration: number } | null>(null);
 
     const handleRunTest = async () => {
         setIsRunning(true);
@@ -20,15 +19,14 @@ const ContainerManager: React.FC<ContainerManagerProps> = ({ id, projectName, ru
             const response = await fetch(`${apiBaseUrl}/api/containermanager/run-container`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, runtime })
+                body: JSON.stringify({ id })
             });
 
             if (!response.ok) {
+                alert(`Błąd podczas uruchamiania testu. "${response.body}"`)
                 throw new Error('Błąd podczas uruchamiania testu.');
             }
 
-            const results = await response.json();
-            setTestResults(results.results);
             alert('Test zakończony pomyślnie!');
         } catch (error) {
             alert('Błąd podczas uruchamiania testu.');
@@ -51,7 +49,7 @@ const ContainerManager: React.FC<ContainerManagerProps> = ({ id, projectName, ru
                 onProjectDeleted(id);
                 alert(`Projekt "${projectName}" został usunięty.`);
             } else {
-                alert('Błąd podczas usuwania projektu.');
+                alert(`Błąd podczas usuwania projektu. "${response.body}"`);
             }
         } catch (error) {
             alert('Wystąpił błąd podczas usuwania projektu.');
@@ -71,13 +69,6 @@ const ContainerManager: React.FC<ContainerManagerProps> = ({ id, projectName, ru
                     Usuń projekt
                 </button>
             </div>
-            {testResults && (
-                <div className="test-results">
-                    <p><strong>CPU:</strong> {testResults.cpu}%</p>
-                    <p><strong>RAM:</strong> {testResults.ram} MB</p>
-                    <p><strong>Czas wykonania:</strong> {testResults.duration} ms</p>
-                </div>
-            )}
         </div>
     );
 };
