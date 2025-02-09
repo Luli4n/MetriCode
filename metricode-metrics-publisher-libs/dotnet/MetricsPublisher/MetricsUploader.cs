@@ -10,20 +10,20 @@ public class MetricsUploader
     private readonly string _mongoDbName;
     private readonly string _runtime;
     private readonly IMongoCollection<BsonDocument> _collection;
-
     private readonly Dictionary<string, Dictionary<string, object>> _fields;
     private readonly Dictionary<string, BsonDocument> _timeseriesFields;
+    private readonly long _timestamp; // 🕒 Timestamp for when results are saved
 
     public MetricsUploader()
     {
         _projectId = Environment.GetEnvironmentVariable("PROJECT_ID") 
-                     ?? throw new Exception("Brak zmiennej środowiskowej: PROJECT_ID");
+                     ?? throw new Exception("Missing environment variable: PROJECT_ID");
 
         _mongoUrl = Environment.GetEnvironmentVariable("MONGO_URL") 
-                    ?? throw new Exception("Brak zmiennej środowiskowej: MONGO_URL");
+                    ?? throw new Exception("Missing environment variable: MONGO_URL");
 
         _mongoDbName = Environment.GetEnvironmentVariable("MONGO_DB_NAME") 
-                       ?? throw new Exception("Brak zmiennej środowiskowej: MONGO_DB_NAME");
+                       ?? throw new Exception("Missing environment variable: MONGO_DB_NAME");
 
         _runtime = Environment.GetEnvironmentVariable("RUNTIME") ?? "unknown";
 
@@ -33,6 +33,8 @@ public class MetricsUploader
 
         _fields = new Dictionary<string, Dictionary<string, object>>();
         _timeseriesFields = new Dictionary<string, BsonDocument>();
+
+        _timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); // 🕒 Store timestamp at object creation
     }
 
     public void AddField(string name, object value, string unit = "")
@@ -47,12 +49,12 @@ public class MetricsUploader
     public void AddTimeseriesField(string name, double[] values, long[] timestamps, string unit = "")
     {
         if (values.Length != timestamps.Length)
-            throw new ArgumentException("Ilość wartości i timestampów musi być równa.");
+            throw new ArgumentException("Number of values and timestamps must match.");
 
         _timeseriesFields[name] = new BsonDocument
         {
-            { "values", new BsonArray(values) },        // ✅ Konwersja na BsonArray
-            { "timestamps", new BsonArray(timestamps) }, // ✅ Konwersja na BsonArray
+            { "values", new BsonArray(values) },       
+            { "timestamps", new BsonArray(timestamps) },
             { "unit", unit }
         };
     }
@@ -64,10 +66,11 @@ public class MetricsUploader
             { "projectId", _projectId },
             { "runtime", _runtime },
             { "fields", _fields.ToBsonDocument() },
-            { "timeseriesFields", new BsonDocument(_timeseriesFields) } // ✅ Właściwa serializacja
+            { "timeseriesFields", new BsonDocument(_timeseriesFields) },
+            { "timestamp", _timestamp } // 🕒 Include timestamp in saved results
         };
 
         _collection.InsertOne(document);
-        Console.WriteLine($"Wyniki zostały zapisane dla projektu {_projectId}.");
+        Console.WriteLine($"Results saved for project {_projectId} at {_timestamp}.");
     }
 }

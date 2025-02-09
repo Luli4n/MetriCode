@@ -17,6 +17,7 @@ interface Project {
 interface BenchmarkResult {
     _id: string;
     projectId: string;
+    timestamp: number;
     fields: Record<string, { value: any; unit: string }>;
     timeseriesFields: Record<string, { values: number[]; timestamps: number[]; unit: string }>;
 }
@@ -76,9 +77,9 @@ const Dashboard: React.FC = () => {
 
     const normalizeTimestamps = (timestamps: number[], startTime?: number) => {
         if (standardizeTime && startTime) {
-            return timestamps.map(ts => ts - startTime); // Standaryzacja -> ms od początku
+            return timestamps.map(ts => ts - startTime);
         }
-        return timestamps.map(ts => new Date(ts)); // Pełne daty bez standaryzacji
+        return timestamps.map(ts => new Date(ts));
     };
 
     return (
@@ -105,36 +106,41 @@ const Dashboard: React.FC = () => {
                             nodeLabel={getProjectName(result.projectId)}
                             defaultCollapsed={false}
                         >
-                            <TreeView nodeLabel="Metryki statyczne" defaultCollapsed={false}>
-                                {Object.keys(result.fields).map((field) => {
-                                    const label = `${getProjectName(result.projectId)} - ${field}`;
-                                    return (
-                                        <div key={label} className="tree-item">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedMetrics.has(label)}
-                                                onChange={() => handleMetricToggle(label)}
-                                            />
-                                            {field}
-                                        </div>
-                                    );
-                                })}
-                            </TreeView>
+                            <TreeView 
+                                nodeLabel={`📅 ${format(new Date(result.timestamp), 'yyyy-MM-dd HH:mm:ss')}`} 
+                                defaultCollapsed={false}
+                            >
+                                <TreeView nodeLabel="📊 Metryki statyczne" defaultCollapsed={true}>
+                                    {Object.keys(result.fields).map((field) => {
+                                        const label = `${getProjectName(result.projectId)} - ${result.timestamp} - ${field}`;
+                                        return (
+                                            <div key={label} className="tree-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedMetrics.has(label)}
+                                                    onChange={() => handleMetricToggle(label)}
+                                                />
+                                                {field}
+                                            </div>
+                                        );
+                                    })}
+                                </TreeView>
 
-                            <TreeView nodeLabel="Szeregi czasowe" defaultCollapsed={false}>
-                                {Object.keys(result.timeseriesFields).map((tsField) => {
-                                    const label = `${getProjectName(result.projectId)} - ${tsField}`;
-                                    return (
-                                        <div key={label} className="tree-item">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedMetrics.has(label)}
-                                                onChange={() => handleMetricToggle(label)}
-                                            />
-                                            {tsField}
-                                        </div>
-                                    );
-                                })}
+                                <TreeView nodeLabel="📈 Szeregi czasowe" defaultCollapsed={true}>
+                                    {Object.keys(result.timeseriesFields).map((tsField) => {
+                                        const label = `${getProjectName(result.projectId)} - ${result.timestamp} - ${tsField}`;
+                                        return (
+                                            <div key={label} className="tree-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedMetrics.has(label)}
+                                                    onChange={() => handleMetricToggle(label)}
+                                                />
+                                                {tsField}
+                                            </div>
+                                        );
+                                    })}
+                                </TreeView>
                             </TreeView>
                         </TreeView>
                     ))}
@@ -147,13 +153,16 @@ const Dashboard: React.FC = () => {
                         <Bar
                             data={{
                                 labels: Array.from(selectedMetrics).filter(metric =>
-                                    results.some(r => r.fields[metric.split(' - ')[1]])
+                                    results.some(r => r.fields[metric.split(' - ')[2]])
                                 ),
                                 datasets: [{
                                     label: 'Wartości',
                                     data: Array.from(selectedMetrics).map(metric => {
-                                        const [projectName, fieldName] = metric.split(' - ');
-                                        const dataset = results.find(r => getProjectName(r.projectId) === projectName);
+                                        const [projectName, timestamp, fieldName] = metric.split(' - ');
+                                        const dataset = results.find(r => 
+                                            getProjectName(r.projectId) === projectName &&
+                                            r.timestamp.toString() === timestamp
+                                        );
                                         return dataset?.fields[fieldName]?.value || 0;
                                     }),
                                     backgroundColor: 'rgba(54, 162, 235, 0.6)',
@@ -167,20 +176,23 @@ const Dashboard: React.FC = () => {
                         <Line
                             data={{
                                 labels: Array.from(selectedMetrics).map(metric => {
-                                    const [projectName, tsFieldName] = metric.split(' - ');
-                                    const dataset = results.find(r => getProjectName(r.projectId) === projectName);
+                                    const [projectName, timestamp, tsFieldName] = metric.split(' - ');
+                                    const dataset = results.find(r => 
+                                        getProjectName(r.projectId) === projectName &&
+                                        r.timestamp.toString() === timestamp
+                                    );
                                     if (!dataset) return [];
                                     const timestamps = dataset.timeseriesFields[tsFieldName]?.timestamps || [];
-                                    return normalizeTimestamps(
-                                        timestamps,
-                                        standardizeTime ? timestamps[0] : undefined
-                                    );
+                                    return normalizeTimestamps(timestamps, standardizeTime ? timestamps[0] : undefined);
                                 }).flat(),
                                 datasets: Array.from(selectedMetrics)
-                                    .filter(metric => results.some(r => r.timeseriesFields[metric.split(' - ')[1]]))
+                                    .filter(metric => results.some(r => r.timeseriesFields[metric.split(' - ')[2]]))
                                     .map((metric, index) => {
-                                        const [projectName, tsFieldName] = metric.split(' - ');
-                                        const dataset = results.find(r => getProjectName(r.projectId) === projectName);
+                                        const [projectName, timestamp, tsFieldName] = metric.split(' - ');
+                                        const dataset = results.find(r => 
+                                            getProjectName(r.projectId) === projectName &&
+                                            r.timestamp.toString() === timestamp
+                                        );
                                         const tsData = dataset?.timeseriesFields[tsFieldName];
                                         if (!tsData) return null;
 
