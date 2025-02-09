@@ -129,3 +129,83 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+# System-specific files ignored by most repositories
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Binary and temporary files
+bin/
+obj/
+out/
+*.exe
+*.dll
+*.pdb
+*.app/
+*.log
+
+# Build and cache files
+*.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.ntvs*
+*.njsproj
+*.sln*
+*.tmp
+*.cache
+*.swp
+
+# .NET-specific files
+*.lock.json
+project.lock.json
+packages/
+.nuget/
+
+*.csproj.user
+*.vbproj.user
+
+# Test-related files and reports
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+# IDE and editor configuration files
+*.sln.DotSettings
+*.sln.DotSettings.user
+*.suo
+*.DotSettings
+*.Rider/
+*.resharper
+*.dotCover
+*.dotTrace
+*.dotMemory
+*.idea/
+
+# NuGet-generated files
+.nuget/
+packages/
+
+# Docker-related files (if using Docker)
+.dockerignore
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Local configuration files
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env
+
+# If using Entity Framework
+migrations/
+
+# ASP.NET-related files
+wwwroot/
+node_modules/

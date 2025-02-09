@@ -18,7 +18,7 @@ const ReadMe: React.FC = () => {
         {
             name: '.NET 8',
             description: 'Dodaj bibliotekę do swojego projektu. Użyj klasy `MetricsUploader` do przesyłania wyników testów.',
-            link: '/libraries/dotnet.zip',
+            link: '/libs/dotnet/MetricsUploader.1.0.0.nupkg',
             linkLabel: 'Pobierz bibliotekę .NET',
         },
     ];
