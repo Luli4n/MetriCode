@@ -1,0 +1,27 @@
+.projects-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    width: 100%;
+  }
+  
+  /* Pierwsza komórka z FileUpload */
+  .add-project-tile {
+    background-color: #f1f1f1;
+    border: 2px dashed #007bff;
+    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  /* Kafelek projektu */
+  .project-tile {
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    padding: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+  }

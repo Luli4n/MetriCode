@@ -1,45 +1,72 @@
-.app-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    background-color: #007bff;
-    color: white;
-}
-
-.app-title {
-    font-size: 1.8rem;
-}
-
-.app-nav {
-    display: flex;
-}
-
-.nav-button {
-    margin: 0 5px;
-    padding: 10px 20px;
-    border: none;
-    background: none;
-    color: white;
-    cursor: pointer;
-    font-size: 1rem;
-    border-bottom: 2px solid transparent;
-    transition: border-bottom 0.2s ease-in-out;
-}
-
-.nav-button.active {
-    border-bottom: 2px solid white;
-}
-
-.nav-button:hover {
-    border-bottom: 2px solid #cccccc;
-}
-
-main {
-    padding: 20px;
+/* Podstawowy reset/layout */
+* {
+    box-sizing: border-box;
+  }
+  
+  body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
     background-color: #f5f5f5;
-    min-height: calc(100vh - 120px);
+  }
+  
+  /* Główny kontener */
+  .app-container {
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  /* Nagłówek */
+  .app-header {
+    background-color: #343a40; /* ciemny szary */
+    color: white;
+    display: flex;
     align-items: center;
-}
+    justify-content: space-between;
+    padding: 20px;
+  }
+  
+  /* Tytuł aplikacji */
+  .app-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ffc107; /* żółtawy */
+    margin: 0;
+  }
+  
+  /* Nawigacja */
+  .app-nav {
+    display: flex;
+    gap: 8px; /* odstęp między przyciskami */
+  }
+  
+  .nav-button {
+    background: none;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+  }
+  
+  .nav-button:hover {
+    background-color: #495057;
+  }
+  
+  .nav-button.active {
+    background-color: #495057;
+  }
+  
+  /* Główna sekcja */
+  .app-main {
+    flex: 1; /* wypełnia resztę ekranu */
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
