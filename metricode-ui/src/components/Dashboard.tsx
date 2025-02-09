@@ -25,6 +25,8 @@ interface BenchmarkResult {
 const Dashboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [results, setResults] = useState<BenchmarkResult[]>([]);
+  
+  // Zbiory wybranych metryk (checkboxów)
   const [selectedStaticMetrics, setSelectedStaticMetrics] = useState<Set<string>>(new Set());
   const [selectedTimeseriesMetrics, setSelectedTimeseriesMetrics] = useState<Set<string>>(new Set());
 
@@ -58,12 +60,13 @@ const Dashboard: React.FC = () => {
     fetchResults();
   }, []);
 
+  // Pobiera nazwę projektu dla projectId
   const getProjectName = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     return project ? project.projectName : `Nieznany projekt (${projectId})`;
   };
 
-  // Pogrupuj results wg projectId
+  // Grupowanie wyników wg projectId (by ładnie je wyświetlić w TreeView)
   const resultsByProject = results.reduce<Record<string, BenchmarkResult[]>>((acc, res) => {
     if (!acc[res.projectId]) {
       acc[res.projectId] = [];
@@ -72,6 +75,7 @@ const Dashboard: React.FC = () => {
     return acc;
   }, {});
 
+  // Obsługa kliknięcia w checkbox
   const handleMetricToggle = (metric: string, isTimeseries: boolean) => {
     if (isTimeseries) {
       setSelectedTimeseriesMetrics((prev) => {
@@ -88,30 +92,16 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  /**
+   * Wykres liniowy: budujemy dataset dla każdej wybranej metryki
+   * Format labela w checkboxach: "ProjectName - <timestamp> - <tsField>"
+   */
   const getLineChartData = () => {
     const datasets = Array.from(selectedTimeseriesMetrics).map((metric) => {
-      const [projectName, tsFieldName] = metric.split(' - ');
-      const found = results.find((r) => getProjectName(r.projectId) === projectName);
-      if (!found) {
-        return {
-          label: metric,
-          data: [],
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(0, 0, 0, 0)',
-        };
-      }
-      const timeseries = found.timeseriesFields[tsFieldName];
-      if (!timeseries) {
-        return {
-          label: metric,
-          data: [],
-          borderColor: 'rgba(54, 162, 235, 1)',
-          backgroundColor: 'rgba(0,0,0,0)',
-        };
-      }
-
-      const { timestamps, values } = timeseries;
-      if (!timestamps.length) {
+      // Rozbijamy klucz: "NazwaProjektu - 1675946072000 - CPUUsage"
+      const parts = metric.split(' - ');
+      if (parts.length < 3) {
+        // Jeśli format jest niewłaściwy, zwracamy pusty dataset
         return {
           label: metric,
           data: [],
@@ -119,15 +109,48 @@ const Dashboard: React.FC = () => {
           backgroundColor: 'rgba(0,0,0,0)',
         };
       }
-      const startTime = timestamps[0];
 
+      const [projectName, rawTimestamp, tsFieldName] = parts;
+      const runTimestamp = Number(rawTimestamp); // np. 1675946072000
+
+      // Znajdź właściwy BenchmarkResult
+      const found = results.find(
+        (r) => getProjectName(r.projectId) === projectName && r.timestamp === runTimestamp
+      );
+      if (!found) {
+        return {
+          label: metric,
+          data: [],
+          borderColor: 'rgba(54,162,235,1)',
+          backgroundColor: 'rgba(0,0,0,0)',
+        };
+      }
+
+      // Pobierz dane timeseries
+      const timeseries = found.timeseriesFields[tsFieldName];
+      if (!timeseries || timeseries.timestamps.length === 0) {
+        return {
+          label: metric,
+          data: [],
+          borderColor: 'rgba(54,162,235,1)',
+          backgroundColor: 'rgba(0,0,0,0)',
+        };
+      }
+      const { timestamps, values } = timeseries;
+
+      // Standaryzacja - pierwszy punkt = x=0
+      const startTime = timestamps[0];
       const dataPoints = timestamps.map((ts, i) => ({
         x: ts - startTime,
         y: values[i] || 0,
       }));
 
+      // Dodaj date/time w labelu na wykresie
+      const runDateStr = format(new Date(runTimestamp), 'yyyy-MM-dd HH:mm:ss');
+      const datasetLabel = `${tsFieldName} (${runDateStr})`;
+
       return {
-        label: metric,
+        label: datasetLabel,
         data: dataPoints,
         borderColor: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
         backgroundColor: 'rgba(0,0,0,0)',
@@ -154,65 +177,86 @@ const Dashboard: React.FC = () => {
               nodeLabel={getProjectName(projectId)}
               defaultCollapsed={false}
             >
-              {projectResults.map((result) => (
-                <TreeView
-                  key={result.timestamp}
-                  nodeLabel={`📅 ${format(new Date(result.timestamp), 'yyyy-MM-dd HH:mm:ss')}`}
-                  defaultCollapsed
-                >
-                  <TreeView nodeLabel="📊 Metryki statyczne" defaultCollapsed>
-                    {Object.keys(result.fields).map((field) => {
-                      const label = `${getProjectName(result.projectId)} - ${field}`;
-                      return (
-                        <div key={label} className="tree-item">
-                          <input
-                            type="checkbox"
-                            checked={selectedStaticMetrics.has(label)}
-                            onChange={() => handleMetricToggle(label, false)}
-                          />
-                          {field}
-                        </div>
-                      );
-                    })}
-                  </TreeView>
+              {projectResults.map((result) => {
+                // Data w formacie czytelnym
+                const dateStr = format(new Date(result.timestamp), 'yyyy-MM-dd HH:mm:ss');
 
-                  <TreeView nodeLabel="📈 Szeregi czasowe" defaultCollapsed>
-                    {Object.keys(result.timeseriesFields).map((tsField) => {
-                      const label = `${getProjectName(result.projectId)} - ${tsField}`;
-                      return (
-                        <div key={label} className="tree-item">
-                          <input
-                            type="checkbox"
-                            checked={selectedTimeseriesMetrics.has(label)}
-                            onChange={() => handleMetricToggle(label, true)}
-                          />
-                          {tsField}
-                        </div>
-                      );
-                    })}
+                return (
+                  <TreeView
+                    key={result.timestamp}
+                    nodeLabel={`📅 ${dateStr}`}
+                    defaultCollapsed
+                  >
+                    {/* Metryki statyczne */}
+                    <TreeView nodeLabel="📊 Metryki statyczne" defaultCollapsed>
+                      {Object.keys(result.fields).map((field) => {
+                        // Klucz checkboxa: "NazwaProjektu - 1675946072000 - CPUUsage"
+                        const label = `${getProjectName(result.projectId)} - ${result.timestamp} - ${field}`;
+                        return (
+                          <div key={label} className="tree-item">
+                            <input
+                              type="checkbox"
+                              checked={selectedStaticMetrics.has(label)}
+                              onChange={() => handleMetricToggle(label, false)}
+                            />
+                            {field} ({dateStr})
+                          </div>
+                        );
+                      })}
+                    </TreeView>
+
+                    {/* Szeregi czasowe */}
+                    <TreeView nodeLabel="📈 Szeregi czasowe" defaultCollapsed>
+                      {Object.keys(result.timeseriesFields).map((tsField) => {
+                        const label = `${getProjectName(result.projectId)} - ${result.timestamp} - ${tsField}`;
+                        return (
+                          <div key={label} className="tree-item">
+                            <input
+                              type="checkbox"
+                              checked={selectedTimeseriesMetrics.has(label)}
+                              onChange={() => handleMetricToggle(label, true)}
+                            />
+                            {tsField} ({dateStr})
+                          </div>
+                        );
+                      })}
+                    </TreeView>
                   </TreeView>
-                </TreeView>
-              ))}
+                );
+              })}
             </TreeView>
           ))}
         </div>
 
         {/* WYKRESY */}
         <div className="charts-container">
+          {/* WYKRES SŁUPKOWY (METRYKI STATYCZNE) */}
           <div className="chart-container">
             <h3>Metryki statyczne</h3>
             <Bar
               data={{
+                // Nazwy to całe klucze (zawierające timestamp),
+                // ale można je wyświetlić w legendzie 1:1, 
+                // lub parsować w "ticks.callback" w options. 
+                // Tu uprościmy i zostawimy klucze wprost.
                 labels: Array.from(selectedStaticMetrics),
                 datasets: [
                   {
                     label: 'Wartości',
                     data: Array.from(selectedStaticMetrics).map((metric) => {
-                      const [projectName, fieldName] = metric.split(' - ');
-                      const dataset = results.find(
-                        (r) => getProjectName(r.projectId) === projectName
+                      const parts = metric.split(' - ');
+                      if (parts.length < 3) return 0;
+
+                      const [projectName, rawTimestamp, fieldName] = parts;
+                      const runTimestamp = Number(rawTimestamp);
+
+                      // Znajdź pasujący result
+                      const found = results.find(
+                        (r) => getProjectName(r.projectId) === projectName && r.timestamp === runTimestamp
                       );
-                      return dataset?.fields[fieldName]?.value || 0;
+                      if (!found) return 0;
+
+                      return found.fields[fieldName]?.value || 0;
                     }),
                     backgroundColor: 'rgba(54, 162, 235, 0.6)',
                   },
@@ -222,14 +266,15 @@ const Dashboard: React.FC = () => {
                 responsive: true,
                 maintainAspectRatio: false,
                 layout: {
-                    padding: {
-                        bottom: 20,
-                    },
+                  padding: {
+                    bottom: 20,
+                  },
                 },
               }}
             />
           </div>
 
+          {/* WYKRES LINIOWY (SZEREGI CZASOWE) */}
           <div className="chart-container">
             <h3>Szeregi czasowe</h3>
             <Line
@@ -239,6 +284,7 @@ const Dashboard: React.FC = () => {
                 maintainAspectRatio: false,
                 scales: {
                   x: {
+                    // linear => czas od startu w ms
                     type: 'linear' as const,
                     title: { display: true, text: 'Czas (ms od startu)' },
                   },
@@ -248,9 +294,9 @@ const Dashboard: React.FC = () => {
                   },
                 },
                 layout: {
-                    padding: {
-                        bottom: 20, 
-                    },
+                  padding: {
+                    bottom: 20,
+                  },
                 },
               }}
             />
