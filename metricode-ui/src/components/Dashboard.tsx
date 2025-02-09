@@ -205,10 +205,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <header className="dashboard-header">
-        <h1>Dashboard</h1>
-      </header>
-
       <div className="dashboard-content">
         {/* PANEL WYBORU METRYK */}
         <div className="metrics-container">
