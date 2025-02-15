@@ -12,7 +12,7 @@ const ReadMe: React.FC = () => {
         {
             name: 'Node.js 20',
             description: 'Pobierz bibliotekę i załącz ją do projektu. Skorzystaj z metody `saveResults()` do przesyłania wyników.',
-            link: '/libraries/node.zip',
+            link: '/libs/node/metrics-uploader-1.0.0.tgz',
             linkLabel: 'Pobierz bibliotekę Node.js',
         },
         {

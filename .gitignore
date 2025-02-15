@@ -209,3 +209,5 @@ migrations/
 # ASP.NET-related files
 wwwroot/
 node_modules/
+
+!metrics-uploader-*.tgz
