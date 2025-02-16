@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
-import * as dotenv from "dotenv"; // Zmieniony import dotenv
-import { MongoClient, ObjectId } from "mongodb";
-import { getBenchmarks } from "./controllers";
+import * as dotenv from "dotenv";
+import { MongoClient } from "mongodb";
+import { getBenchmarks, postBenchmark } from "./controllers";
 
 dotenv.config();
 
@@ -34,6 +34,10 @@ app.get("/api/benchmarks/:projectId", async (req: Request, res: Response) => {
 
 app.get("/api/benchmarks", async (req: Request, res: Response) => {
     await getBenchmarks(req, res, db);
+});
+
+app.post("/api/benchmarks", async (req: Request, res: Response) => {
+    await postBenchmark(req, res, db);
 });
 
 // Endpoint zdrowotności

@@ -1,5 +1,5 @@
 import time
-from metricode import MetricsUploader
+from metrics_uploader import MetricsUploader
 
 # Inicjalizacja uploader'a
 uploader = MetricsUploader()

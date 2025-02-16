@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: metrics_uploader
+Version: 1.0.0
+Summary: Biblioteka do wysyłania wyników benchmarków do centralnego API
+Author: Your Name
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Requires-Dist: requests>=2.25.0

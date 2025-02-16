@@ -1,19 +1,15 @@
-const { MongoClient } = require("mongodb");
+const axios = require("axios");
 
 class MetricsUploader {
     constructor() {
         this.projectId = process.env.PROJECT_ID;
-        this.mongoUrl = process.env.MONGO_URL;
-        this.mongoDbName = process.env.MONGO_DB_NAME;
+        // Endpoint API do zapisu metryk; można nadpisać przez zmienną środowiskową METRICS_API_URL
+        this.metricsApiUrl = process.env.METRICS_API_URL || "http://localhost:5003/api/benchmarks";
         this.runtime = process.env.RUNTIME || "unknown";
 
-        if (!this.projectId || !this.mongoUrl || !this.mongoDbName) {
-            throw new Error("Missing required environment variables: PROJECT_ID, MONGO_URL, MONGO_DB_NAME.");
+        if (!this.projectId) {
+            throw new Error("Missing required environment variable: PROJECT_ID.");
         }
-
-        this.client = new MongoClient(this.mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true });
-        this.db = this.client.db(this.mongoDbName);
-        this.collection = this.db.collection("benchmarkResults");
 
         this.fields = {};
         this.timeseriesFields = {};
@@ -41,14 +37,15 @@ class MetricsUploader {
                 timestamp: this.timestamp
             };
 
-            await this.collection.insertOne(result);
-            console.log(`✅ Results saved for project ${this.projectId} at ${this.timestamp}.`);
+            const response = await axios.post(this.metricsApiUrl, result);
+
+            if (response.status === 201) {
+                console.log(`✅ Results saved for project ${this.projectId} at ${this.timestamp}.`);
+            } else {
+                console.error("❌ Error saving metrics:", response.data);
+            }
         } catch (error) {
-            console.error("❌ Error saving metrics:", error);
-        } finally {
-            await this.client.close(); 
-            console.log("🔴 MongoDB connection closed. Exiting process.");
-            process.exit(0);
+            console.error("❌ Error saving metrics:", error.message);
         }
     }
 }

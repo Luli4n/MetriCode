@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using MetricsPublisher;
 
 class Program
 {
-        static void Main()
+        static async Task Main()
     {
         var uploader = new MetricsUploader();
 
@@ -34,6 +35,6 @@ class Program
         uploader.AddTimeseriesField("cpu_usage", cpuUsages, timestamps, unit: "%");
 
         // Zapis wyników do bazy
-        uploader.SaveResults();
+        await uploader.SaveResultsAsync();
     }
 }

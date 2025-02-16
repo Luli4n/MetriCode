@@ -17,3 +17,23 @@ export const getBenchmarks = async (req: Request, res: Response, db: any) => {
         res.status(500).send("Błąd pobierania wyników.");
     }
 };
+
+export const postBenchmark = async (req: Request, res: Response, db: any) => {
+    try {
+        const metricData = req.body;
+
+        if (!metricData.projectId) {
+            return res.status(400).send("Błąd: 'projectId' jest wymagany.");
+        }
+
+        if (!metricData.timestamp) {
+            metricData.timestamp = Date.now();
+        }
+
+        await db.collection("benchmarkResults").insertOne(metricData);
+        res.status(201).send("Benchmark zapisany pomyślnie.");
+    } catch (error) {
+        console.error("❌ Błąd zapisu benchmarku:", error);
+        res.status(500).send("Błąd zapisu benchmarku.");
+    }
+};

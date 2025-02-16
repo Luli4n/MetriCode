@@ -1,0 +1,8 @@
+setup.py
+metrics_uploader/__init__.py
+metrics_uploader/metricsuploader.py
+metrics_uploader.egg-info/PKG-INFO
+metrics_uploader.egg-info/SOURCES.txt
+metrics_uploader.egg-info/dependency_links.txt
+metrics_uploader.egg-info/requires.txt
+metrics_uploader.egg-info/top_level.txt

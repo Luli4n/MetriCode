@@ -100,8 +100,6 @@ app.post('/api/containermanager/run-container', async (req, res) => {
             --network host \
             -v metricode_uploads_volume:/app/dist/uploads \
             -e PROJECT_ID=${project._id} \
-            -e MONGO_URL=mongodb://localhost:27017 \
-            -e MONGO_DB_NAME=${DB_NAME} \
             -e RUNTIME=${project.runtime} \
             ${imageName} \
             /bin/sh -c "cd /app/dist/uploads/${project._id} && /app/run.sh"

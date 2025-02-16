@@ -2,11 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Instalacja dodatkowych zależności, jeśli potrzebne
-RUN apt-get update && apt-get install -y \
-    && rm -rf /var/lib/apt/lists/*
+COPY metrics_uploader-1.0.0.tar.gz /app/
 
-# Ustaw skrypt uruchamiający projekt
+RUN pip install /app/metrics_uploader-1.0.0.tar.gz
+
 COPY run.sh /app/run.sh
 RUN chmod +x /app/run.sh
 

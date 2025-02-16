@@ -6,7 +6,7 @@ const ReadMe: React.FC = () => {
         {
             name: 'Python 3.12',
             description: 'Pobierz bibliotekę i załącz ją do projektu. Użyj funkcji `save_results` w swoim kodzie, aby przesłać dane do bazy.',
-            link: '/libs/python/metricode.py',
+            link: '/libs/python/metrics_uploader-1.0.0.tar.gz',
             linkLabel: 'Pobierz bibliotekę Python',
         },
         {
