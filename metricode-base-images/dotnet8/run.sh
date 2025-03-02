@@ -10,8 +10,19 @@ if [ -z "$CSPROJ_FILE" ]; then
 fi
 
 echo "Znaleziono plik projektu: $CSPROJ_FILE. Rozpoczynam kompilację..."
-dotnet add package MetricsUploader --version 1.0.0 --source "/app/nuget-packages"
+
+# Dodaj źródło NuGet.org jeśli jeszcze nie istnieje
+dotnet nuget list source | grep "nuget.org" > /dev/null
+if [ $? -ne 0 ]; then
+    dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
+fi
+
+# Dodaj lokalne źródło pakietów
+dotnet nuget add source /app/nuget-packages --name local
+
+# Przywrócenie zależności
 dotnet restore
+
 # Budujemy projekt
 dotnet build -c Release
 if [ $? -ne 0 ]; then

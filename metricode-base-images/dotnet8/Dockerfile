@@ -11,5 +11,7 @@ COPY MetricsUploader.1.0.0.nupkg /app/nuget-packages/
 COPY run.sh /app/run.sh
 RUN chmod +x /app/run.sh
 
+
+
 # Ustawienie domyślnego polecenia
 CMD ["/bin/bash", "/app/run.sh"]

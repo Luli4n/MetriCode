@@ -211,3 +211,4 @@ wwwroot/
 node_modules/
 
 !metrics-uploader-*.tgz
+Archiwum.zip

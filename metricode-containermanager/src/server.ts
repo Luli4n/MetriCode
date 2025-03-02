@@ -95,12 +95,14 @@ app.post('/api/containermanager/run-container', async (req, res) => {
         const containerName = `project_${project._id}`; // Nazwa kontenera oparta o ID projektu
 
         const command = `
-            docker run --rm \
+            docker run \
             --name "${containerName}" \
             --network host \
             -v metricode_uploads_volume:/app/dist/uploads \
             -e PROJECT_ID=${project._id} \
             -e RUNTIME=${project.runtime} \
+            --cpus="4" \
+            --memory="8g" \
             ${imageName} \
             /bin/sh -c "cd /app/dist/uploads/${project._id} && /app/run.sh"
         `;

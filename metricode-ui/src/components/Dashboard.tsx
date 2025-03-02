@@ -6,6 +6,9 @@ import TreeView from 'react-treeview';
 import 'react-treeview/react-treeview.css';
 import { format } from 'date-fns';
 import './Dashboard.css';
+import ChartDataLabels from "chartjs-plugin-datalabels";
+import { Chart } from "chart.js";
+Chart.register(ChartDataLabels); 
 
 const apiBaseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -162,44 +165,45 @@ const Dashboard: React.FC = () => {
    * Klucz metryki ma postać: "ProjectName - <timestamp> - <fieldName>"
    */
   const getBarChartData = () => {
-    // etykiety w osi X
+    // Etykiety w osi X
     const barLabels = Array.from(selectedStaticMetrics).map((metricKey) => {
-      const parts = metricKey.split(' - ');
+      const parts = metricKey.split(" - ");
       if (parts.length < 3) return metricKey;
-
+  
       const [projName, rawTs, fieldName] = parts;
       const runTs = Number(rawTs);
-      const runDateStr = format(new Date(runTs), 'yyyy-MM-dd HH:mm:ss');
-
-      // Podpis w osi X: "ProjectName - fieldName (2025-02-09 12:54:39)"
+      const runDateStr = format(new Date(runTs), "yyyy-MM-dd HH:mm:ss");
+  
       return `${projName} - ${fieldName} (${runDateStr})`;
     });
-
-    // wartości:
+  
+    // Wartości oraz jednostki
     const barValues = Array.from(selectedStaticMetrics).map((metricKey) => {
-      const parts = metricKey.split(' - ');
-      if (parts.length < 3) return 0;
-
+      const parts = metricKey.split(" - ");
+      if (parts.length < 3) return { value: 0, unit: "" };
+  
       const [projName, rawTs, fieldName] = parts;
       const runTs = Number(rawTs);
-
+  
       const found = results.find(
         (r) => getProjectName(r.projectId) === projName && r.timestamp === runTs
       );
-      if (!found) return 0;
-
-      return found.fields[fieldName]?.value || 0;
+      if (!found) return { value: 0, unit: "" };
+  
+      const field = found.fields[fieldName];
+      return field ? { value: field.value, unit: field.unit } : { value: 0, unit: "" };
     });
-
+  
     return {
       labels: barLabels,
       datasets: [
         {
-          label: 'Wartości',
-          data: barValues,
-          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          label: "Wartości",
+          data: barValues.map((bv) => bv.value),
+          backgroundColor: "rgba(54, 162, 235, 0.6)",
         },
       ],
+      units: barValues.map((bv) => bv.unit), // Dodanie jednostek
     };
   };
 
@@ -283,36 +287,66 @@ const Dashboard: React.FC = () => {
                     bottom: 20,
                   },
                 },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: (tooltipItem) => {
+                        const dataset = getBarChartData();
+                        const unit = dataset.units?.[tooltipItem.dataIndex] || "";
+                        return `${tooltipItem.raw} ${unit}`;
+                      },
+                    },
+                  },
+                  datalabels: {
+                    anchor: "end",
+                    align: "top",
+                    formatter: (value, context) => {
+                      const dataset = getBarChartData();
+                      const unit = dataset.units?.[context.dataIndex] || "";
+                      return `${value} ${unit}`;
+                    },
+                    font: {
+                      weight: "bold",
+                    },
+                    color: "#000",
+                  },
+                },
               }}
             />
           </div>
 
           {/* WYKRES LINIOWY (szeregi czasowe) */}
-          <div className="chart-container">
-            <h3>Szeregi czasowe</h3>
-            <Line
-              data={getLineChartData()}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  x: {
-                    type: 'linear' as const,
-                    title: { display: true, text: 'Czas (ms od startu)' },
-                  },
-                  y: {
-                    beginAtZero: true,
-                    title: { display: true, text: 'Wartość' },
-                  },
-                },
-                layout: {
-                  padding: {
-                    bottom: 20,
-                  },
-                },
-              }}
-            />
-          </div>
+          {/* WYKRES LINIOWY (szeregi czasowe) */}
+<div className="chart-container">
+  <h3>Szeregi czasowe</h3>
+  <Line
+    data={getLineChartData()}
+    options={{
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'linear' as const,
+          title: { display: true, text: 'Czas (ms od startu)' },
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: 'Wartość' },
+        },
+      },
+      layout: {
+        padding: {
+          bottom: 20,
+        },
+      },
+      plugins: {
+        datalabels: {
+          display: false, // wyłączenie etykiet x/y na wykresie liniowym
+        },
+      },
+    }}
+  />
+</div>
         </div>
       </div>
     </div>

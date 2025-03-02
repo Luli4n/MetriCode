@@ -12,7 +12,7 @@ const MONGO_URL = process.env.MONGO_URL || "mongodb://mongodb:27017";
 const DB_NAME = process.env.MONGO_DB_NAME || "metricode";
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json( { limit: '50mb' }));
 
 const client = new MongoClient(MONGO_URL);
 let db: any;
