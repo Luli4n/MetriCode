@@ -62,19 +62,17 @@ app.post('/api/containermanager/run-container', async (req, res) => {
             return res.status(404).send('Projekt nie istnieje.');
         }
 
-        const projectZipPath = project.filePath; // Pełna ścieżka do pliku ZIP z bazy danych
-        const projectExtractPath = path.join(UPLOADS_PATH, project._id.toString()); // Katalog docelowy
+        const projectZipPath = project.filePath;
+        const projectExtractPath = path.join(UPLOADS_PATH, project._id.toString());
 
         console.log(`[DEBUG] Ścieżka do pliku ZIP: ${projectZipPath}`);
         console.log(`[DEBUG] Ścieżka do rozpakowania projektu: ${projectExtractPath}`);
 
-        // Sprawdzenie istnienia pliku ZIP
         if (!fs.existsSync(projectZipPath)) {
             console.error(`[DEBUG] Plik ZIP nie istnieje pod ścieżką: ${projectZipPath}`);
             return res.status(404).send('Plik projektu nie istnieje.');
         }
 
-        // Rozpakowywanie pliku, jeśli jeszcze nie rozpakowano
         if (!fs.existsSync(projectExtractPath)) {
             await unpackProject(projectZipPath, projectExtractPath);
             console.log(`[DEBUG] Projekt ${project._id} rozpakowany do ${projectExtractPath}`);
@@ -92,7 +90,7 @@ app.post('/api/containermanager/run-container', async (req, res) => {
         }
 
         isContainerRunning = true;
-        const containerName = `project_${project._id}`; // Nazwa kontenera oparta o ID projektu
+        const containerName = `project_${project._id}`;
 
         const command = `
             docker run \

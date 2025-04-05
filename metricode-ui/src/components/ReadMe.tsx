@@ -5,19 +5,19 @@ const ReadMe: React.FC = () => {
     const languages = [
         {
             name: 'Python 3.12',
-            description: 'Pobierz bibliotekę i załącz ją do projektu. Użyj funkcji `save_results` w swoim kodzie, aby przesłać dane do bazy.',
+            description: 'Pobierz moduł i zaimportuj go w swoim projekcie. Korzystaj z klasy `MetricsUploader` do operacji na metrykach. Używaj funkcji `add_field()` i `add_timeseries_field()` do zapisywania metryk lokalnie. Na koniec wyślij metryki do systemu wykorzystując metodę `save_results()`.',
             link: '/libs/python/metrics_uploader-1.0.0.tar.gz',
             linkLabel: 'Pobierz bibliotekę Python',
         },
         {
             name: 'Node.js 20',
-            description: 'Pobierz bibliotekę i załącz ją do projektu. Skorzystaj z metody `saveResults()` do przesyłania wyników.',
+            description: 'Pobierz paczkę NPM i zainstaluj ją w swoim środowisku. Wykorzystaj klasę `MetricsUploader`. Zapisuj metryki lokalnie za pomocą metod `addField()` i `addTimeseriesField()`. Na koniec skorzystaj z metody `saveResults()` aby przesłać wyniki do systemu.',
             link: '/libs/node/metrics-uploader-1.0.0.tgz',
             linkLabel: 'Pobierz bibliotekę Node.js',
         },
         {
             name: '.NET 8',
-            description: 'Dodaj bibliotekę do swojego projektu. Użyj klasy `MetricsUploader` do przesyłania wyników testów.',
+            description: 'Pobierz paczkę Nuget i dołącz ją do do swojego projektu. Użyj klasy `MetricsUploader` do przesyłania wyników testów. Metody `AddField()` i `AddTimeseriesField()` służą do zapisywania wyników lokalnie. Metoda `SaveResultsAsync()` umożliwia ich zapisanie w systemie.',
             link: '/libs/dotnet/MetricsUploader.1.0.0.nupkg',
             linkLabel: 'Pobierz bibliotekę .NET',
         },

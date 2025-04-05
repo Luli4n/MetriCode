@@ -3,7 +3,6 @@ const axios = require("axios");
 class MetricsUploader {
     constructor() {
         this.projectId = process.env.PROJECT_ID;
-        // Endpoint API do zapisu metryk; można nadpisać przez zmienną środowiskową METRICS_API_URL
         this.metricsApiUrl = process.env.METRICS_API_URL || "http://localhost:5003/api/benchmarks";
         this.runtime = process.env.RUNTIME || "unknown";
 
@@ -13,7 +12,7 @@ class MetricsUploader {
 
         this.fields = {};
         this.timeseriesFields = {};
-        this.timestamp = Date.now(); // 🕒 Store timestamp at object creation
+        this.timestamp = Date.now(); 
     }
 
     addField(name, value, unit = "") {
